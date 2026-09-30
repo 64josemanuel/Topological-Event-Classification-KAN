@@ -49,7 +49,7 @@ archivo_modelo_multiclase = os.path.join(DIR_CHK, "modelo_kan_multiclase.pt")
 ruta_ecuacion = os.path.join(DIR_CHK, "ecuaciones_frontera.txt")
 archivo_stats_simbolicas = os.path.join(DIR_CHK, "stats_simbolicas.pkl")
 
-# Funciones Seguras (Senior Robustness)
+
 def robust_split(X, Y):
     """Partición segura contra colapsos por sets de datos extremadamente pequeños."""
     if len(X) < 2:
@@ -65,7 +65,7 @@ def robust_split(X, Y):
 ## Step 1: Data Loading
 nombres_clases_dinamicas = ["Normal"]
 mapeo_carpetas = {}
-idx_clase_actual = 1  # FIX CRÍTICO: 0 es para Normal, las fallas comienzan en 1
+idx_clase_actual = 1  
 
 if os.path.exists(archivo_dataset_crudo):
     with open(archivo_dataset_crudo, "rb") as f:
@@ -76,7 +76,6 @@ if os.path.exists(archivo_dataset_crudo):
     mascara_load = datos['mascara_load']
     indices_buses_validos = datos['indices_buses_validos']
     
-    # Auto-Sanitización: Si el dataset viejo usó 0 para Generador, se desplaza a 1
     if dataset_crudo and any(e['etiqueta'] == 0 for e in dataset_crudo):
         for e in dataset_crudo: e['etiqueta'] += 1
         with open(archivo_dataset_crudo, "wb") as f:
@@ -105,7 +104,7 @@ else:
         ruta = archivo.lower().replace('\\', '/')
         carpeta_padre = os.path.basename(os.path.dirname(archivo)).lower()
         
-        # Mapeo dinámico de CUALQUIER carpeta (Escalable)
+        # Mapeo dinámico de CUALQUIER carpeta 
         if carpeta_padre not in mapeo_carpetas:
             mapeo_carpetas[carpeta_padre] = idx_clase_actual
             if 'gen' in carpeta_padre: nombres_clases_dinamicas.append("Generator Trip")
@@ -537,7 +536,7 @@ try:
 except Exception:
     pass
 
-## Step 5: Multiclass dataset (Fully Dynamic for any number of classes)
+## Step 5: Multiclass dataset 
 if os.path.exists(archivo_dataset_mc):
     dataset_mc = torch.load(archivo_dataset_mc, weights_only=False)
     X_train_mc = dataset_mc['train_input'].numpy()
