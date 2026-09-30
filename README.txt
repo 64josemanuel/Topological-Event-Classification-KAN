@@ -1,67 +1,42 @@
-Clasificación Topológica de Eventos en Sistemas de Potencia mediante Redes KAN y GSP
+CLASIFICACION TOPOLOGICA DE EVENTOS EN SISTEMAS DE POTENCIA (GSP Y KAN)
 
-Este repositorio contiene el código fuente para el entrenamiento, validación e interpretabilidad simbólica de un modelo de diagnóstico de fallas eléctricas. El sistema utiliza Procesamiento de Señales en Grafos (GSP) y Redes Neuronales de Kolmogorov-Arnold (KAN) para detectar eventos y extraer ecuaciones algebraicas a partir de simulaciones dinámicas.
+Este repositorio contiene el codigo fuente para un modelo de diagnostico de fallas electricas. Utiliza Procesamiento de Senales en Grafos (GSP) y Redes Neuronales de Kolmogorov-Arnold (KAN) para detectar eventos y extraer ecuaciones algebraicas a partir de simulaciones dinamicas.
 
-Estructura del Repositorio
+GUIA 
+PASO 1: INSTALACION DE DEPENDENCIAS
+Abre tu terminal e instala todas las librerias necesarias.  Ejecuta la siguiente linea de texto en tu consola o elige las que hagan falta:
 
-El sistema requiere y generará la siguiente estructura de directorios:
+pip install numpy scipy sympy torch seaborn matplotlib networkx tqdm scikit-learn PyGSP pykan
 
-├── data/
+PASO 2: PREPARACION DE LOS DATOS
+Tus datos deben ser generados mediante Power System Toolbox (PST) en MATLAB y exportados en formato .mat, o estar en el mismo formato.
+Requisitos internos de los eventos: Debe existir una estructura llamada "sstr" que contenga las variables "bus_v" (voltaje), "bus_freq" (frecuencia) y "t" (tiempo).
+Archivo de Topologia Base: Ademas de los eventos, el sistema necesita conocer la estructura de tu red. Debes tener un archivo .mat principal que contenga las matrices "bus" (informacion de generadores y cargas) y "line" (impedancias de las lineas). 
+Como organizar los archivos: Crea una carpeta principal. Dentro de ella, coloca tu archivo de topologia base. Luego, crea subcarpetas para cada tipo de evento (ejemplo: "generators", "lines", "loads") y coloca los archivos de simulacion dentro. El sistema le asignara una clase a cada subcarpeta de manera automatica.
 
-│   ├── generators/          # Archivos .mat correspondientes a fallas de generador
-│   ├── lines/               # Archivos .mat correspondientes a fallas de línea
-│   └── loads/               # Archivos .mat correspondientes a cambios de carga
-├── checkpoints_tesis/       # (Autogenerado después de la ejecución del código) Almacena tensores, modelos .pt y ecuaciones extraídas (.txt)
-├── figuras_tesis/           # (Autogenerado después de la ejecución del código) Almacena gráficas de resultados en formato PDF
-├── kan_master.py            # Script principal (Preprocesamiento, Entrenamiento KAN y Extracción Simbólica)
+PASO 3: CONFIGURACION DE RED Y MATRICES
+Si necesitas adaptar el modelo a tu propio sistema, abre el archivo kan_master.py y ajusta lo siguiente en las primeras lineas:
 
-Requisitos de Datos (PST - MATLAB)
+Uso de Topologia Fisica (USAR_YBUS_FISICA): Esta variable controla como se construye el grafo del sistema. Cambiala a True si deseas que el algoritmo lea los datos fisicos de tus lineas de transmision y construya la matriz de admitancia real. Dejala en False si no cuentas con esos datos o si prefieres que la Inteligencia Artificial deduzca las conexiones matematicamente (Graphical Lasso) basandose unicamente en el comportamiento de las oscilaciones.
 
-Los datos de entrada deben generarse mediante el Power System Toolbox (PST) de MATLAB.
+Archivo de red base: Busca la linea de codigo que dice "90bus_wrew.mat". Este es el archivo predeterminado que el programa intenta leer para extraer la topologia ("bus" y "line"). Borra ese nombre y escribe exactamente el nombre del archivo .mat de tu propio sistema electrico.
 
-Formato: Archivos .mat.
+Directorio: Modifica la variable DIR_DATOS para que tenga la ruta exacta hacia tu carpeta principal de datos. Si todo esta en el mismo lugar, dejalo como r"."
 
-Contenido: Estructura denominada "sstr" con las variables "bus_v" (magnitud de voltaje en p.u.), "bus_freq" (frecuencia) y "t" (vector de tiempo).
+Parametros fisicos: Ajusta "frecuencia_base" a 50.0 o 60.0. Modifica "limite_desviacion" (por defecto 2.0) si necesitas cambiar el umbral para excluir nodos inestables.
 
-Topología: El script extrae la matriz de admitancia leyendo las variables "bus" y "line" del primer archivo procesado.
+Hiperparametros de la red KAN: Busca la definicion de width. Cambia el numero central (por defecto 8) para alterar las neuronas ocultas. Cambia grid=15 para modificar los intervalos de los splines.
 
-Asignación dinámica de clases: El algoritmo escanea el directorio raíz de datos y asigna una clase independiente a cada subcarpeta que contenga archivos .mat. El tamaño de la capa de salida de la red KAN se ajusta automáticamente a la cantidad de subcarpetas detectadas.
+Complejidad de las ecuaciones: Busca la instruccion prune. Si subes los umbrales (ejemplo 1e-1) obtendras ecuaciones mas compactas y simples. Si los bajas (ejemplo 1e-3) conservaras mas variables y mayor complejidad.
 
-Parámetros Modificables (kan_master.py)
-
-Para adaptar el código a otros set de datos, modifique las siguientes variables en kan_master.py:
-
-Directorio de datos (Si el repositorio cumple la estructura de directorios ocupar esta DIR_DATOS, caso contrario colocar la ruta donde se encuentran las carpetas con las clases.):
-DIR_DATOS = r"."
-
-Parámetros físicos:
-frecuencia_base = 60.0 (Ajustar a 50.0 según el estándar de red).
-limite_desviacion = 2.0 (Umbral de exclusión para nodos desconectados o inestables).
-
-Hiperparámetros KAN:
-En la declaración modelo_kan_mc = KAN(width=[dimension_entrada_mc, 8, num_clases_totales], grid=15, k=3):
-
-width: Modificar el segundo valor (8) para alterar el número de neuronas ocultas.
-
-grid: Modificar el número de intervalos de la cuadrícula de los splines (15).
-
-Poda y Regresión Simbólica:
-En la instrucción modelo_kan_mc.prune(node_th=1e-2, edge_th=1e-2):
-
-Aumentar los umbrales (ej. 1e-1) para obtener ecuaciones más compactas.
-
-Reducir los umbrales (ej. 1e-3) para conservar mayor complejidad y variables.
-
-Instrucciones de Ejecución
-
-Paso 1: Preparación del entorno
-Asegúrese de instalar las dependencias requeridas: torch, sympy, numpy, scipy, seaborn, networkx, scikit-learn y pygsp.
-
-Paso 2: Organización de datos
-Coloque sus archivos .mat estructurados en subcarpetas dentro del directorio definido en DIR_DATOS.
-
-Paso 3: Entrenamiento y extracción
-Ejecute el script maestro para procesar los grafos, entrenar el modelo y generar el archivo ecuaciones_frontera.txt.
+PASO 4: EJECUCION DEL PROGRAMA
+Abre tu terminal en la ubicacion exacta donde guardaste el script principal y ejecuta la siguiente instruccion:
 
 python kan_master.py
 
+QUE OBTENDRAS AL FINALIZAR
+El programa trabajara solo y creara automaticamente dos nuevas carpetas en tu equipo:
+
+checkpoints_tesis: Aqui encontraras los tensores, los modelos entrenados guardados (.pt) y un archivo de texto llamado ecuaciones_frontera.txt con las formulas extraidas.
+
+figuras_tesis: Aqui se guardaran todas las graficas de resultados y validacion en formato PDF.

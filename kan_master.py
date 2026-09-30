@@ -36,6 +36,8 @@ plt.rcParams.update({
 
 DIR_CHK = r"./checkpoints_tesis"
 DIR_FIGS = r"./figuras_tesis"
+USAR_YBUS_FISICA = False  
+
 os.makedirs(DIR_CHK, exist_ok=True)
 os.makedirs(DIR_FIGS, exist_ok=True)
 
@@ -51,7 +53,6 @@ archivo_stats_simbolicas = os.path.join(DIR_CHK, "stats_simbolicas.pkl")
 
 
 def robust_split(X, Y):
-    """Partición segura contra colapsos por sets de datos extremadamente pequeños."""
     if len(X) < 2:
         return X, X, Y, Y
     try:
@@ -90,7 +91,7 @@ if os.path.exists(archivo_dataset_crudo):
     num_clases_totales = len(nombres_clases_dinamicas)
 else:
     frecuencia_base, limite_desviacion = 60.0, 2.0 
-    DIR_DATOS = r"C:\Users\PowerSystemLab\Dropbox\Tesis_MSc_Manuel\work\Simulaciones Tesis\add_rew\ME_SY\eventos_mexico"
+    DIR_DATOS = r"."
     
     mat_topo = scipy.io.loadmat(os.path.join(DIR_DATOS, "90bus_wrew.mat"), squeeze_me=True, struct_as_record=False)
     matriz_bus_global = mat_topo['bus']
@@ -144,12 +145,16 @@ else:
     matriz_line_global = mat_topo['line'] if isinstance(mat_topo, dict) else mat_topo.line
     matriz_bus_global = mat_topo['bus'] if isinstance(mat_topo, dict) else mat_topo.bus
 
-    for fila in matriz_line_global:
-        o, d = int(fila[0])-1, int(fila[1])-1
-        if o in indices_buses_validos and d in indices_buses_validos:
-            idx_o, idx_d = indices_buses_validos.index(o), indices_buses_validos.index(d)
-            admitancia = 1.0 / np.sqrt(fila[2]**2 + fila[3]**2)
-            W_fisica[idx_o, idx_d] = W_fisica[idx_d, idx_o] = admitancia
+    if USAR_YBUS_FISICA:
+        try:
+            for fila in matriz_line_global:
+                o, d = int(fila[0])-1, int(fila[1])-1
+                if o in indices_buses_validos and d in indices_buses_validos:
+                    idx_o, idx_d = indices_buses_validos.index(o), indices_buses_validos.index(d)
+                    admitancia = 1.0 / np.sqrt(fila[2]**2 + fila[3]**2)
+                    W_fisica[idx_o, idx_d] = W_fisica[idx_d, idx_o] = admitancia
+        except Exception as e:
+            print(f"\n[Aviso] No se pudo procesar la topología física: {e}")
 
     for fila in matriz_bus_global:
         id_bus = int(fila[0])-1
@@ -212,7 +217,13 @@ else:
     if alpha_optimo is None and historial_alphas: W_inferida = W_temp
 
     W_fisica_norm = W_fisica / np.max(W_fisica) if np.max(W_fisica) > 0 else W_fisica
-    W_final = (0.5 * W_fisica_norm) + (0.5 * W_inferida)
+    
+    if USAR_YBUS_FISICA:
+        W_final = (0.5 * W_fisica_norm) + (0.5 * W_inferida)
+    else:
+        # Usa el 100% de la matriz inferida por Graphical Lasso
+        W_final = W_inferida.copy() 
+        
     W_final[W_final < 0.05] = 0
     np.fill_diagonal(W_final, 0)
     
