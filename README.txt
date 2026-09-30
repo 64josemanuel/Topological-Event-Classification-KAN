@@ -14,7 +14,6 @@ El sistema requiere y generará la siguiente estructura de directorios:
 ├── checkpoints_tesis/       # (Autogenerado) Almacena tensores, modelos .pt y ecuaciones extraídas (.txt)
 ├── figuras_tesis/           # (Autogenerado) Almacena gráficas de resultados en formato PDF
 ├── kan_master.py            # Script principal (Preprocesamiento, Entrenamiento KAN y Extracción Simbólica)
-└── kan_interpretability.py  # Script de validación (Evaluación analítica y Matriz de Confusión)
 
 Requisitos de Datos (PST - MATLAB)
 
@@ -33,7 +32,7 @@ Parámetros Modificables (kan_master.py)
 Para adaptar el código a otros set de datos, modifique las siguientes variables en kan_master.py:
 
 Directorio de datos:
-DIR_DATOS = r"tu/ruta/a/los/datos"
+DIR_DATOS = r"."
 
 Parámetros físicos:
 frecuencia_base = 60.0 (Ajustar a 50.0 según el estándar de red).
