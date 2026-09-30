@@ -11,8 +11,8 @@ El sistema requiere y generará la siguiente estructura de directorios:
 │   ├── generators/          # Archivos .mat correspondientes a fallas de generador
 │   ├── lines/               # Archivos .mat correspondientes a fallas de línea
 │   └── loads/               # Archivos .mat correspondientes a cambios de carga
-├── checkpoints_tesis/       # (Autogenerado) Almacena tensores, modelos .pt y ecuaciones extraídas (.txt)
-├── figuras_tesis/           # (Autogenerado) Almacena gráficas de resultados en formato PDF
+├── checkpoints_tesis/       # (Autogenerado después de la ejecución del código) Almacena tensores, modelos .pt y ecuaciones extraídas (.txt)
+├── figuras_tesis/           # (Autogenerado después de la ejecución del código) Almacena gráficas de resultados en formato PDF
 ├── kan_master.py            # Script principal (Preprocesamiento, Entrenamiento KAN y Extracción Simbólica)
 
 Requisitos de Datos (PST - MATLAB)
@@ -31,7 +31,7 @@ Parámetros Modificables (kan_master.py)
 
 Para adaptar el código a otros set de datos, modifique las siguientes variables en kan_master.py:
 
-Directorio de datos:
+Directorio de datos (Si el repositorio cumple la estructura de directorios ocupar esta DIR_DATOS, caso contrario colocar la ruta donde se encuentran las carpetas con las clases.):
 DIR_DATOS = r"."
 
 Parámetros físicos:
